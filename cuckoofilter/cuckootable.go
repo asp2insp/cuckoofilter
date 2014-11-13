@@ -6,19 +6,19 @@ import (
 	"math/rand"
 )
 
-type fingerprint []byte
+type Fingerprint []byte
 
 type CuckooTable interface {
 	Insert([]byte) error                                           // O(1)
 	Lookup([]byte) bool                                            // O(1)
 	Delete([]byte)                                                 // O(1)
-	Size() int                                                     // O(1)
+	Size() uint                                                    // O(1)
 	Stats() (utilization, rebucketRatio, compressionRatio float64) // O(1)
 }
 
-type ConfigurableCuckooTable struct {
-	data          [][]fingerprint
-	fingerprinter func([]byte, uint) fingerprint
+type configurableCuckooTable struct {
+	data          [][]Fingerprint
+	fingerprinter func([]byte, uint) Fingerprint
 	capacity,
 	rebuckets,
 	bucketSize,
@@ -28,15 +28,15 @@ type ConfigurableCuckooTable struct {
 	bytesRepresented uint
 }
 
-func NewCuckooTable(capacity, maxRetries, bucketSize, fingerprintSize uint) *ConfigurableCuckooTable {
-	ret := new(ConfigurableCuckooTable)
+func NewCuckooTable(capacity, maxRetries, bucketSize, fingerprintSize uint) CuckooTable {
+	ret := new(configurableCuckooTable)
 	ret.size = 0
 
 	// Allocate all memory up front
-	ret.data = make([][]fingerprint, capacity)
+	ret.data = make([][]Fingerprint, capacity)
 	var i uint
 	for i = 0; i < capacity; i++ {
-		ret.data[i] = make([]fingerprint, bucketSize)
+		ret.data[i] = make([]Fingerprint, bucketSize)
 	}
 	ret.fingerprinter = myFingerprintFunc
 	ret.maxRetries = maxRetries
@@ -48,7 +48,7 @@ func NewCuckooTable(capacity, maxRetries, bucketSize, fingerprintSize uint) *Con
 	return ret
 }
 
-func (t *ConfigurableCuckooTable) Insert(item []byte) error {
+func (t *configurableCuckooTable) Insert(item []byte) error {
 	f, i1, i2 := t.getIndices(item)
 	success := false
 	if insert(f, t.data[i1]) {
@@ -91,7 +91,7 @@ func (t *ConfigurableCuckooTable) Insert(item []byte) error {
 	}
 }
 
-func insert(f fingerprint, b []fingerprint) bool {
+func insert(f Fingerprint, b []Fingerprint) bool {
 	for i, v := range b {
 		if equal(v, f) {
 			return true
@@ -106,7 +106,7 @@ func insert(f fingerprint, b []fingerprint) bool {
 	return false
 }
 
-func (t *ConfigurableCuckooTable) Lookup(item []byte) bool {
+func (t *configurableCuckooTable) Lookup(item []byte) bool {
 	f, i1, i2 := t.getIndices(item)
 	if contains(f, t.data[i1]) || contains(f, t.data[i2]) {
 		return true
@@ -114,7 +114,7 @@ func (t *ConfigurableCuckooTable) Lookup(item []byte) bool {
 	return false
 }
 
-func contains(f fingerprint, b []fingerprint) bool {
+func contains(f Fingerprint, b []Fingerprint) bool {
 	for _, v := range b {
 		if equal(v, f) {
 			return true
@@ -123,7 +123,7 @@ func contains(f fingerprint, b []fingerprint) bool {
 	return false
 }
 
-func equal(f1, f2 fingerprint) bool {
+func equal(f1, f2 Fingerprint) bool {
 	if len(f1) != len(f2) {
 		return false
 	}
@@ -135,7 +135,7 @@ func equal(f1, f2 fingerprint) bool {
 	return true
 }
 
-func (t *ConfigurableCuckooTable) Delete(item []byte) {
+func (t *configurableCuckooTable) Delete(item []byte) {
 	f, i1, i2 := t.getIndices(item)
 	// fmt.Printf("Deleting %v %v/%v\n", string(item), t.data[i1], t.data[i2])
 
@@ -151,7 +151,7 @@ func (t *ConfigurableCuckooTable) Delete(item []byte) {
 	}
 }
 
-func (t *ConfigurableCuckooTable) getIndices(item []byte) (f []byte, i1, i2 uint) {
+func (t *configurableCuckooTable) getIndices(item []byte) (f []byte, i1, i2 uint) {
 	f = t.fingerprinter(item, t.fingerprintSize)
 	i1 = hash(item)
 	i2 = (i1 ^ hash(f)) % t.capacity
@@ -159,7 +159,7 @@ func (t *ConfigurableCuckooTable) getIndices(item []byte) (f []byte, i1, i2 uint
 	return
 }
 
-func deleteF(f fingerprint, b []fingerprint) {
+func deleteF(f Fingerprint, b []Fingerprint) {
 	for i, v := range b {
 		if equal(v, f) {
 			b[i] = nil
@@ -167,11 +167,11 @@ func deleteF(f fingerprint, b []fingerprint) {
 	}
 }
 
-func (t *ConfigurableCuckooTable) Size() uint {
+func (t *configurableCuckooTable) Size() uint {
 	return t.size
 }
 
-func (t *ConfigurableCuckooTable) Stats() (utilization, rebucketRatio, compressionRatio float64) {
+func (t *configurableCuckooTable) Stats() (utilization, rebucketRatio, compressionRatio float64) {
 	utilization = float64(t.size) / float64(t.capacity*t.bucketSize)
 	rebucketRatio = float64(t.rebuckets) / float64(t.size)
 	compressionRatio = float64(t.bytesRepresented) / float64(t.capacity*t.bucketSize*t.fingerprintSize)
@@ -179,7 +179,7 @@ func (t *ConfigurableCuckooTable) Stats() (utilization, rebucketRatio, compressi
 }
 
 // Adapted from https://moinakg.wordpress.com/tag/rabin-fingerprint/
-func myFingerprintFunc(value []byte, fingerprintSize uint) fingerprint {
+func myFingerprintFunc(value []byte, fingerprintSize uint) Fingerprint {
 	windowsize := 8
 	mod := 255
 	prime := 71
@@ -202,7 +202,7 @@ func myFingerprintFunc(value []byte, fingerprintSize uint) fingerprint {
 	return ret
 }
 
-func hash(f fingerprint) uint {
+func hash(f Fingerprint) uint {
 	var h uint = 5381
 
 	for i := 0; i < len(f); i++ {

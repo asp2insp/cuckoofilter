@@ -128,7 +128,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestBucketFunctions(t *testing.T) {
-	b := make([]fingerprint, 1)
+	b := make([]Fingerprint, 1)
 	f := myFingerprintFunc([]byte("John Doe"), 4)
 
 	testutils.ExpectTrue(insert(f, b), "insert f failed", t)

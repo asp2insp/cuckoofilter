@@ -13,6 +13,12 @@ Basic usage:
 // 5 bytes per fingerprint representation. Allow 500 iterations of the cuckoo
 // displacement before failing on insert.
 table := NewCuckooTable(10000, 500, 4, 5)
+table.Insert([]byte("Hello World"))
+table.Lookup([]byte("Hello World")) // true
+table.Size() // 0
+table.Stats() // utilization, rebucketRatio, compressionRatio
+
+table.Delete([]byte("Hello World"))
 ```
 
 See main.go for a benchmark using the `/usr/share/dict/words` file.

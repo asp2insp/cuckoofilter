@@ -3,7 +3,7 @@ package cuckoofilter
 import (
 	"testing"
 
-	"github.com/ca-geo/go-misc/testutils"
+	"github.com/asp2insp/go-misc/testutils"
 )
 
 func TestOneToOne(t *testing.T) {

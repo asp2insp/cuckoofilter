@@ -1,0 +1,10 @@
+language: go
+
+install:
+  - go get github.com/asp2insp/go-misc/testutils
+
+go:
+  - tip
+
+script:
+  - go test -v ./...

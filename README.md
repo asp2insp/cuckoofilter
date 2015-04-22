@@ -1,6 +1,7 @@
 # Cuckoo Filter
 
 [![Build Status](https://travis-ci.org/asp2insp/cuckoofilter.svg)](https://travis-ci.org/asp2insp/cuckoofilter)
+
 This is a Golang implementation of [Cuckoo Filters](https://www.cs.cmu.edu/~dga/papers/cuckoo-conext2014.pdf)
 
 
